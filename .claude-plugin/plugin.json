@@ -1,7 +1,7 @@
 {
   "name": "design-system-as-md",
   "description": "Represent your Figma design system as structured markdown and CSS files for LLM usability. Initialize, update, and search your design system from the command line.",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "author": { "name": "eshraw" },
   "keywords": ["design-system", "figma", "design", "tokens", "components"],
   "license": "BSD-3-Clause"
