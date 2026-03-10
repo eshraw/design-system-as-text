@@ -46,14 +46,23 @@ design-system/
 
 ## Installation
 
-In Claude Code:
+### In Claude Code
 
 ```
 /plugin marketplace add eshraw/design-system-as-text
 /plugin install design-system-as-text@design-system-as-text
 ```
 
+### In Cursor
+
+Once this repo is available as a Cursor plugin (via the Cursor Marketplace or your team’s private marketplace):
+
+1. **Open Cursor → Plugins panel.**
+2. **Search for `design-system-as-text`** and install it.
+3. Make sure the **Figma MCP server** is configured in Cursor.
+4. In a chat or code context, use the same slash commands as in Claude Code: `/initialize-ds`, `/update-ds`, `/ds`.
+
 ## Requirements
 
-- Claude with plugin support
+- Claude or Cursor with plugin support
 - Figma MCP server (for `/initialize-ds` and `/update-ds`)
