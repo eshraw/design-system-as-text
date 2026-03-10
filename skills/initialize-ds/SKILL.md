@@ -240,21 +240,38 @@ Tell the user:
 
 > "I wasn't able to export design tokens from Figma automatically (variables may not be published, or your plan may not include the Variables API). Let's get your tokens in another way so `tokens.json` can be created."
 
-Then ask:
+Then present a multiple-choice prompt using this exact format so the Claude app renders it as selectable options:
 
-> "Do you have an existing token file I can import? For example: a `tokens.json` from Style Dictionary, Token Studio, Figma Tokens plugin, or any JSON export. Or would you prefer to define them together now?"
+> **How would you like to provide your design tokens?**
+>
+> **A)** Import an existing file — I have a `tokens.json`, Token Studio export, Style Dictionary output, or similar
+> **B)** Define them here — I'll type my tokens and we'll build the file together
+> **C)** Skip for now — create a placeholder I can fill in later
+
+Wait for the user to pick A, B, or C before continuing.
 
 ### Step B — Branch on user response
 
-**If the user provides a file path or pastes JSON:**
+**If the user picks A (import file):**
+
+Ask:
+
+> **What format is your token file?**
+>
+> **1)** Token Studio / Figma Tokens plugin
+> **2)** Style Dictionary
+> **3)** W3C Design Tokens (DTCG format)
+> **4)** Raw / flat JSON (simple key-value pairs)
+> **5)** Not sure — paste it and I'll detect the format
+
+Then ask the user to provide the file path or paste the JSON content.
 
 1. Read or accept the token data.
-2. Detect the format:
-   - **Token Studio / Figma Tokens** — groups at the top level, values under `$value` / `value` keys.
+2. Normalize to the standard `tokens.json` shape based on the detected/chosen format:
+   - **Token Studio / Figma Tokens** — groups at top level, values under `$value` / `value` keys.
    - **Style Dictionary** — nested category → type → item with `value` keys.
-   - **Raw / flat** — flat key-value pairs.
-   - **W3C Design Tokens** — `$value` and `$type` on each token.
-3. Normalize to the standard `tokens.json` shape:
+   - **W3C / DTCG** — `$value` and `$type` on each token.
+   - **Raw / flat** — flat key-value pairs, infer types from values.
    ```json
    {
      "_meta": {
@@ -272,22 +289,65 @@ Then ask:
      }
    }
    ```
-4. Write `design-system/tokens.json`.
-5. Confirm: "Imported [N] tokens across [M] collections from your file."
+3. Write `design-system/tokens.json`.
+4. Confirm: "Imported [N] tokens across [M] collections from your file."
 
-**If the user wants to define tokens interactively:**
+**If the user picks B (define interactively):**
 
-Ask the following questions one at a time, building the token map as you go:
+Ask the following questions one at a time, each as a multiple-choice or free-text prompt depending on the question. Wait for confirmation after each before moving on.
 
-1. "What color tokens do you use? List them as `name: value` pairs (e.g. `primary: #0052CC`)."
-2. "What spacing tokens do you use? (e.g. `spacing-sm: 4px, spacing-md: 8px`)"
-3. "What typography tokens do you use? (e.g. font families, sizes, weights)"
-4. "Any other token categories — shadows, border radii, z-index, motion?"
-5. "Do you use multiple themes or modes (e.g. light/dark)? If so, give values per mode."
+**Question 1 — Colors**
 
-After each answer, confirm the tokens back to the user before moving on. When all categories are collected, write `design-system/tokens.json` using the standard shape above.
+> **Which color token categories do you want to define? (select all that apply)**
+>
+> **A)** Brand / primary palette
+> **B)** Neutral / grey scale
+> **C)** Semantic (success, warning, error, info)
+> **D)** Surface / background colors
+> **E)** Other / all at once
 
-**If the user wants to skip tokens entirely:**
+Then ask: "List your color tokens as `name: value` pairs (e.g. `primary: #0052CC`)."
+
+**Question 2 — Spacing**
+
+> **Do you use a spacing scale?**
+>
+> **A)** Yes, a fixed scale (e.g. 4px, 8px, 16px…) — I'll list the steps
+> **B)** Yes, named tokens (e.g. `spacing-sm`, `spacing-lg`) — I'll define each
+> **C)** No dedicated spacing tokens
+
+**Question 3 — Typography**
+
+> **Which typography tokens do you want to define?**
+>
+> **A)** Font families only
+> **B)** Font sizes only
+> **C)** Font weights only
+> **D)** All of the above (families, sizes, weights, line heights)
+> **E)** No typography tokens
+
+**Question 4 — Other categories**
+
+> **Any additional token categories?**
+>
+> **A)** Border radius
+> **B)** Shadows / elevation
+> **C)** Z-index
+> **D)** Motion / duration / easing
+> **E)** Multiple of the above
+> **F)** None
+
+**Question 5 — Modes / themes**
+
+> **Do you use multiple modes or themes?**
+>
+> **A)** Yes — light and dark
+> **B)** Yes — more than two themes (describe them)
+> **C)** No, single mode only
+
+After all questions are answered, summarize the collected tokens back to the user for confirmation, then write `design-system/tokens.json` using the standard shape above.
+
+**If the user picks C (skip):**
 
 Acknowledge and write a placeholder file so downstream tooling doesn't break:
 
@@ -305,14 +365,68 @@ Tell the user: "A placeholder `tokens.json` has been created. You can populate i
 
 ## Phase 6 — Create ds-usage.md via interview
 
-Ask these questions one at a time, waiting for answers:
+Ask these questions one at a time using multiple-choice prompts. Wait for the user's answer before moving to the next. After all answers are collected, generate `ds-usage.md`.
 
-1. "What are the primary breakpoints and responsive behaviors?"
-2. "Are there rules for combining components — e.g. 'never use X inside Y'?"
-3. "Are there accessibility requirements or patterns (ARIA roles, focus order, color contrast)?"
-4. "What are common anti-patterns to avoid when using this design system?"
-5. "Are there brand or tone guidelines for copy within components (labels, placeholders, error messages)?"
-6. "Are there any deprecated components still present in Figma that should not be used?"
+**Question 1 — Breakpoints**
+
+> **Do you have defined breakpoints or responsive behavior?**
+>
+> **A)** Yes — standard (mobile / tablet / desktop)
+> **B)** Yes — custom breakpoints (I'll describe them)
+> **C)** No responsive rules defined yet
+
+If A or B, follow up: "List your breakpoints and any layout behavior that changes at each (e.g. column count, spacing, component variants)."
+
+**Question 2 — Component composition rules**
+
+> **Are there rules for combining components?**
+>
+> **A)** Yes — there are explicit restrictions (e.g. "never use X inside Y")
+> **B)** Yes — there are preferred patterns but no hard rules
+> **C)** No specific composition rules
+
+If A or B, follow up: "Describe the rules or patterns."
+
+**Question 3 — Accessibility**
+
+> **What accessibility requirements apply to this design system?**
+>
+> **A)** WCAG AA compliance
+> **B)** WCAG AAA compliance
+> **C)** Internal a11y guidelines (I'll describe them)
+> **D)** No formal requirements defined
+> **E)** Multiple of the above
+
+If A, B, C, or E, follow up: "Are there specific patterns to call out — ARIA roles, focus order, colour contrast rules, or keyboard navigation?"
+
+**Question 4 — Anti-patterns**
+
+> **Are there known anti-patterns or misuses to document?**
+>
+> **A)** Yes — I know specific ones to call out
+> **B)** Not sure — help me think through common ones for this type of system
+> **C)** No anti-patterns to document yet
+
+If A, follow up: "List the anti-patterns."
+If B, suggest common ones based on the components discovered in Phase 2 and ask the user to confirm which apply.
+
+**Question 5 — Brand & copy guidelines**
+
+> **Are there guidelines for copy inside components (labels, placeholders, error messages)?**
+>
+> **A)** Yes — formal tone/voice guidelines exist
+> **B)** Yes — informal rules the team follows
+> **C)** No copy guidelines
+
+If A or B, follow up: "Describe the guidelines (e.g. sentence case for labels, avoid 'click here', max character counts)."
+
+**Question 6 — Deprecated components**
+
+> **Are there deprecated components still present in Figma that should not be used in code?**
+>
+> **A)** Yes — I'll list them
+> **B)** Not sure — I'd like to flag some as "review needed"
+> **C)** No deprecated components
 
 Generate `ds-usage.md` from the answers:
 
