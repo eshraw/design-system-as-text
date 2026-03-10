@@ -8,7 +8,7 @@
       "name": "design-system-as-md",
       "source": "./",
       "description": "Represent your Figma design system as structured markdown and CSS files for LLM usability.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": {
         "name": "eshraw"
       },
