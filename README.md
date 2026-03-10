@@ -44,6 +44,15 @@ design-system/
 | `tokens.css` | No — fully regenerated on every `/update-ds` |
 | `design-system.md` | No — managed by the plugin |
 
+## Installation
+
+In Claude Code:
+
+```
+/plugin marketplace add eshraw/design-system-as-text
+/plugin install design-system-as-md@design-system-as-md
+```
+
 ## Requirements
 
 - Claude with plugin support
