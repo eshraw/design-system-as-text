@@ -240,13 +240,13 @@ Tell the user:
 
 > "I wasn't able to export design tokens from Figma automatically (variables may not be published, or your plan may not include the Variables API). Let's get your tokens in another way so `tokens.json` can be created."
 
-Then present a multiple-choice prompt using this exact format so the Claude app renders it as selectable options:
+Then use the `AskUserQuestion` tool with this question and these choices:
 
-> **How would you like to provide your design tokens?**
->
-> **A)** Import an existing file — I have a `tokens.json`, Token Studio export, Style Dictionary output, or similar
-> **B)** Define them here — I'll type my tokens and we'll build the file together
-> **C)** Skip for now — create a placeholder I can fill in later
+- question: "How would you like to provide your design tokens?"
+- choices:
+  - "A) Import an existing file — I have a tokens.json, Token Studio export, Style Dictionary output, or similar"
+  - "B) Define them here — I'll type my tokens and we'll build the file together"
+  - "C) Skip for now — create a placeholder I can fill in later"
 
 Wait for the user to pick A, B, or C before continuing.
 
@@ -254,17 +254,17 @@ Wait for the user to pick A, B, or C before continuing.
 
 **If the user picks A (import file):**
 
-Ask:
+Use the `AskUserQuestion` tool:
 
-> **What format is your token file?**
->
-> **1)** Token Studio / Figma Tokens plugin
-> **2)** Style Dictionary
-> **3)** W3C Design Tokens (DTCG format)
-> **4)** Raw / flat JSON (simple key-value pairs)
-> **5)** Not sure — paste it and I'll detect the format
+- question: "What format is your token file?"
+- choices:
+  - "1) Token Studio / Figma Tokens plugin"
+  - "2) Style Dictionary"
+  - "3) W3C Design Tokens (DTCG format)"
+  - "4) Raw / flat JSON (simple key-value pairs)"
+  - "5) Not sure — paste it and I'll detect the format"
 
-Then ask the user to provide the file path or paste the JSON content.
+Then use the `AskUserQuestion` tool to ask the user to provide the file path or paste the JSON content (free text, no choices).
 
 1. Read or accept the token data.
 2. Normalize to the standard `tokens.json` shape based on the detected/chosen format:
@@ -294,58 +294,66 @@ Then ask the user to provide the file path or paste the JSON content.
 
 **If the user picks B (define interactively):**
 
-Ask the following questions one at a time, each as a multiple-choice or free-text prompt depending on the question. Wait for confirmation after each before moving on.
+Ask the following questions one at a time using the `AskUserQuestion` tool. Wait for confirmation after each before moving on.
 
 **Question 1 — Colors**
 
-> **Which color token categories do you want to define? (select all that apply)**
->
-> **A)** Brand / primary palette
-> **B)** Neutral / grey scale
-> **C)** Semantic (success, warning, error, info)
-> **D)** Surface / background colors
-> **E)** Other / all at once
+- question: "Which color token categories do you want to define? (select all that apply)"
+- choices:
+  - "A) Brand / primary palette"
+  - "B) Neutral / grey scale"
+  - "C) Semantic (success, warning, error, info)"
+  - "D) Surface / background colors"
+  - "E) Other / all at once"
 
-Then ask: "List your color tokens as `name: value` pairs (e.g. `primary: #0052CC`)."
+Then use `AskUserQuestion` (free text) to ask: "List your color tokens as name: value pairs (e.g. primary: #0052CC)."
 
 **Question 2 — Spacing**
 
-> **Do you use a spacing scale?**
->
-> **A)** Yes, a fixed scale (e.g. 4px, 8px, 16px…) — I'll list the steps
-> **B)** Yes, named tokens (e.g. `spacing-sm`, `spacing-lg`) — I'll define each
-> **C)** No dedicated spacing tokens
+- question: "Do you use a spacing scale?"
+- choices:
+  - "A) Yes, a fixed scale (e.g. 4px, 8px, 16px…) — I'll list the steps"
+  - "B) Yes, named tokens (e.g. spacing-sm, spacing-lg) — I'll define each"
+  - "C) No dedicated spacing tokens"
+
+If A or B, follow up with `AskUserQuestion` (free text): "List your spacing tokens."
 
 **Question 3 — Typography**
 
-> **Which typography tokens do you want to define?**
->
-> **A)** Font families only
-> **B)** Font sizes only
-> **C)** Font weights only
-> **D)** All of the above (families, sizes, weights, line heights)
-> **E)** No typography tokens
+- question: "Which typography tokens do you want to define?"
+- choices:
+  - "A) Font families only"
+  - "B) Font sizes only"
+  - "C) Font weights only"
+  - "D) All of the above (families, sizes, weights, line heights)"
+  - "E) No typography tokens"
+
+If A–D, follow up with `AskUserQuestion` (free text): "List your typography tokens."
 
 **Question 4 — Other categories**
 
-> **Any additional token categories?**
->
-> **A)** Border radius
-> **B)** Shadows / elevation
-> **C)** Z-index
-> **D)** Motion / duration / easing
-> **E)** Multiple of the above
-> **F)** None
+- question: "Any additional token categories?"
+- choices:
+  - "A) Border radius"
+  - "B) Shadows / elevation"
+  - "C) Z-index"
+  - "D) Motion / duration / easing"
+  - "E) Multiple of the above"
+  - "F) None"
+
+If A–E, follow up with `AskUserQuestion` (free text): "List the tokens for those categories."
 
 **Question 5 — Modes / themes**
 
-> **Do you use multiple modes or themes?**
->
-> **A)** Yes — light and dark
-> **B)** Yes — more than two themes (describe them)
-> **C)** No, single mode only
+- question: "Do you use multiple modes or themes?"
+- choices:
+  - "A) Yes — light and dark"
+  - "B) Yes — more than two themes (I'll describe them)"
+  - "C) No, single mode only"
 
-After all questions are answered, summarize the collected tokens back to the user for confirmation, then write `design-system/tokens.json` using the standard shape above.
+If A or B, follow up with `AskUserQuestion` (free text): "Describe the modes and list any token values that differ between them."
+
+After all questions are answered, summarize the collected tokens back to the user using `AskUserQuestion`: "Here's what I collected — does this look correct?" with choices "Yes, write the file" / "No, let me correct something". Then write `design-system/tokens.json` using the standard shape above.
 
 **If the user picks C (skip):**
 
@@ -365,68 +373,71 @@ Tell the user: "A placeholder `tokens.json` has been created. You can populate i
 
 ## Phase 6 — Create ds-usage.md via interview
 
-Ask these questions one at a time using multiple-choice prompts. Wait for the user's answer before moving to the next. After all answers are collected, generate `ds-usage.md`.
+Ask these questions one at a time using the `AskUserQuestion` tool. Wait for the user's answer before moving to the next. After all answers are collected, generate `ds-usage.md`.
 
 **Question 1 — Breakpoints**
 
-> **Do you have defined breakpoints or responsive behavior?**
->
-> **A)** Yes — standard (mobile / tablet / desktop)
-> **B)** Yes — custom breakpoints (I'll describe them)
-> **C)** No responsive rules defined yet
+- question: "Do you have defined breakpoints or responsive behavior?"
+- choices:
+  - "A) Yes — standard (mobile / tablet / desktop)"
+  - "B) Yes — custom breakpoints (I'll describe them)"
+  - "C) No responsive rules defined yet"
 
-If A or B, follow up: "List your breakpoints and any layout behavior that changes at each (e.g. column count, spacing, component variants)."
+If A or B, follow up with `AskUserQuestion` (free text): "List your breakpoints and any layout behavior that changes at each (e.g. column count, spacing, component variants)."
 
 **Question 2 — Component composition rules**
 
-> **Are there rules for combining components?**
->
-> **A)** Yes — there are explicit restrictions (e.g. "never use X inside Y")
-> **B)** Yes — there are preferred patterns but no hard rules
-> **C)** No specific composition rules
+- question: "Are there rules for combining components?"
+- choices:
+  - "A) Yes — there are explicit restrictions (e.g. never use X inside Y)"
+  - "B) Yes — there are preferred patterns but no hard rules"
+  - "C) No specific composition rules"
 
-If A or B, follow up: "Describe the rules or patterns."
+If A or B, follow up with `AskUserQuestion` (free text): "Describe the rules or patterns."
 
 **Question 3 — Accessibility**
 
-> **What accessibility requirements apply to this design system?**
->
-> **A)** WCAG AA compliance
-> **B)** WCAG AAA compliance
-> **C)** Internal a11y guidelines (I'll describe them)
-> **D)** No formal requirements defined
-> **E)** Multiple of the above
+- question: "What accessibility requirements apply to this design system?"
+- choices:
+  - "A) WCAG AA compliance"
+  - "B) WCAG AAA compliance"
+  - "C) Internal a11y guidelines (I'll describe them)"
+  - "D) No formal requirements defined"
+  - "E) Multiple of the above"
 
-If A, B, C, or E, follow up: "Are there specific patterns to call out — ARIA roles, focus order, colour contrast rules, or keyboard navigation?"
+If A, B, C, or E, follow up with `AskUserQuestion` (free text): "Are there specific patterns to call out — ARIA roles, focus order, colour contrast rules, or keyboard navigation?"
 
 **Question 4 — Anti-patterns**
 
-> **Are there known anti-patterns or misuses to document?**
->
-> **A)** Yes — I know specific ones to call out
-> **B)** Not sure — help me think through common ones for this type of system
-> **C)** No anti-patterns to document yet
+- question: "Are there known anti-patterns or misuses to document?"
+- choices:
+  - "A) Yes — I know specific ones to call out"
+  - "B) Not sure — help me think through common ones for this type of system"
+  - "C) No anti-patterns to document yet"
 
-If A, follow up: "List the anti-patterns."
-If B, suggest common ones based on the components discovered in Phase 2 and ask the user to confirm which apply.
+If A, follow up with `AskUserQuestion` (free text): "List the anti-patterns."
+If B, suggest common ones based on the components discovered in Phase 2 and use `AskUserQuestion` with each as a selectable choice for the user to confirm which apply.
 
 **Question 5 — Brand & copy guidelines**
 
-> **Are there guidelines for copy inside components (labels, placeholders, error messages)?**
->
-> **A)** Yes — formal tone/voice guidelines exist
-> **B)** Yes — informal rules the team follows
-> **C)** No copy guidelines
+- question: "Are there guidelines for copy inside components (labels, placeholders, error messages)?"
+- choices:
+  - "A) Yes — formal tone/voice guidelines exist"
+  - "B) Yes — informal rules the team follows"
+  - "C) No copy guidelines"
 
-If A or B, follow up: "Describe the guidelines (e.g. sentence case for labels, avoid 'click here', max character counts)."
+If A or B, follow up with `AskUserQuestion` (free text): "Describe the guidelines (e.g. sentence case for labels, avoid 'click here', max character counts)."
 
 **Question 6 — Deprecated components**
 
-> **Are there deprecated components still present in Figma that should not be used in code?**
->
-> **A)** Yes — I'll list them
-> **B)** Not sure — I'd like to flag some as "review needed"
-> **C)** No deprecated components
+- question: "Are there deprecated components still present in Figma that should not be used in code?"
+- choices:
+  - "A) Yes — I'll list them"
+  - "B) Not sure — I'd like to flag some as review needed"
+  - "C) No deprecated components"
+
+If A, follow up with `AskUserQuestion` (free text): "List the deprecated component names."
+If B, follow up with `AskUserQuestion` (free text): "List the components you're unsure about and I'll flag them."
 
 Generate `ds-usage.md` from the answers:
 
