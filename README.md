@@ -1,4 +1,4 @@
-# design-system-as-md
+# design-system-as-text
 
 A Claude plugin that represents your Figma design system as structured markdown and CSS files — making it easy for Claude to understand and apply your design system when building UI.
 
@@ -50,7 +50,7 @@ In Claude Code:
 
 ```
 /plugin marketplace add eshraw/design-system-as-text
-/plugin install design-system-as-md@design-system-as-md
+/plugin install design-system-as-text@design-system-as-text
 ```
 
 ## Requirements

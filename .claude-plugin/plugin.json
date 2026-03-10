@@ -1,5 +1,5 @@
 {
-  "name": "design-system-as-md",
+  "name": "design-system-as-text",
   "description": "Represent your Figma design system as structured markdown and CSS files for LLM usability. Initialize, update, and search your design system from the command line.",
   "version": "1.1.0",
   "author": { "name": "eshraw" },
