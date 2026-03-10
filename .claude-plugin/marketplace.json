@@ -1,0 +1,19 @@
+{
+  "name": "design-system-as-md",
+  "owner": {
+    "name": "eshraw"
+  },
+  "plugins": [
+    {
+      "name": "design-system-as-md",
+      "source": "./",
+      "description": "Represent your Figma design system as structured markdown and CSS files for LLM usability.",
+      "version": "1.0.0",
+      "author": {
+        "name": "eshraw"
+      },
+      "keywords": ["design-system", "figma", "design", "tokens", "components"],
+      "license": "BSD-3-Clause"
+    }
+  ]
+}
